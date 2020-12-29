@@ -10,25 +10,28 @@ This repository contains a set of builds for amd64 architecture on multiple oper
 
 ## Compiling from source
 
-1. Install OpenCV 4.5.0. On macOS you can just use brew and install it like so:
+**1. Install OpenCV 4.5.0.** 
+
+On macOS you can just use brew and install it like so:
 ```
 brew install opencv
 ```
+On ubuntu it is suggested to compile it from source. You can find instructions for ubuntu [here](https://www.samontab.com/web/2020/11/installing-opencv-4-5-0-in-ubuntu-20-04-lts/).
 
-2. Install the below build dependencies:
+**2. Install the below build dependencies:**
 ```
 go get -u -d gocv.io/x/gocv
 go get -u github.com/google/uuid
 ```
 
-3. Clone this repository and navigate to the ParkindStreamer directory
+**3. Clone this repository and navigate to the ParkindStreamer directory**
 ```
 git clone https://github.com/TheSlipper/Parkind.git
 cd Parkind/ParkindStreamer/
 go build
 ```
 
-4. ParkindStreamer is compiled. You can run it like so:
+**4. ParkindStreamer is compiled. You can run it like so:**
 ```
 LOGIN=your_parkind_login PASSWORD=your_password ./ParkindStreamer -verbose
 ```
