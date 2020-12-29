@@ -20,14 +20,14 @@ On ubuntu it is suggested to compile it from source. You can find instructions f
 
 **2. Install the below build dependencies:**
 ```
-go get -u -d gocv.io/x/gocv
-go get -u github.com/google/uuid
+go get -u -d gocv.io/x/gocv@v0.25.0
+go get -u github.com/google/uuid@v1.1.2
 ```
 
 **3. Clone this repository and navigate to the ParkindStreamer directory**
 ```
-git clone https://github.com/TheSlipper/Parkind.git
-cd Parkind/ParkindStreamer/
+git clone https://github.com/TheSlipper/ParkindStreamer.git
+cd ParkindStreamer/
 go build
 ```
 
