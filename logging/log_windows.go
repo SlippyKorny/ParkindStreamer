@@ -18,8 +18,8 @@ func NormalLog(a ...string) {
 	log(a)
 }
 
-func InfoLog(a ...string) {
-	if !args.verbosity {
+func InfoLog(verbose bool, a ...string) {
+	if !verbose {
 		return
 	}
 
