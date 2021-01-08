@@ -11,13 +11,14 @@ import (
 )
 
 // Handler of the client's http server
-type parkindClientHandler struct {
-	verbose bool
-	token   uuid.UUID
+type parkindStreamerHandler struct {
+	verbose bool      // verbosity flag
+	token   uuid.UUID // new connection token
 }
 
-// Implementation of the http.Handler interface. Used as a simple router that calls handlers that correspond to given urls
-func (p parkindClientHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+// Implementation of the http.Handler interface. Used as a simple router that calls handlers
+// that correspond to given urls
+func (p parkindStreamerHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	url := req.URL.String()
 	logging.InfoLog(p.verbose, "Received a", req.Method, "request at", url)
 
@@ -31,10 +32,9 @@ func (p parkindClientHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reques
 // Sets up the http server of the parkind client and returns it
 func CreateHttpServer(verbose bool) (s *http.Server) {
 	// Create an http handler
-	handler := parkindClientHandler{verbose: verbose}
+	handler := parkindStreamerHandler{verbose: verbose}
 
 	// Generate a connection token for this session
-	var err error
 	handler.token, err = uuid.NewRandom()
 	if err != nil {
 		logging.ErrorLog(err.Error())
@@ -64,7 +64,7 @@ func invalidUrlHandle(rw http.ResponseWriter, req *http.Request) {
 }
 
 // Url handle that checks if the connection can be established with the given data
-func connectionTestHandle(rw http.ResponseWriter, req *http.Request, p *parkindClientHandler) {
+func connectionTestHandle(rw http.ResponseWriter, req *http.Request, p *parkindStreamerHandler) {
 	// as of now it'll be the default until token generation is implemented
 	fail := func() {
 		rw.WriteHeader(http.StatusForbidden)

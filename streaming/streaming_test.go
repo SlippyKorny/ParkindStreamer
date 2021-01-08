@@ -15,8 +15,8 @@ func getMemUsage() uint64 {
 	return m.Sys
 }
 
-// TestCameraStreaming tests the functionality of the camera session
-func TestCameraStreaming(t *testing.T) {
+// TestCameraReadingAndLeaks tests the functionality of the camera session
+func TestCameraReadingAndLeaks(t *testing.T) {
 	camCount := 1
 	cs, err := NewCameraSession(camCount)
 	if err != nil {
@@ -27,7 +27,6 @@ func TestCameraStreaming(t *testing.T) {
 
 	// Declare arrays for storing information about memory usage
 	var memStats []uint64
-	// var memAvg uint64 = 0
 
 	// Run a loop until 5 seconds pass
 	start := time.Now()
@@ -57,5 +56,37 @@ func TestCameraStreaming(t *testing.T) {
 			t.Log(memStats)
 			t.Fail()
 		}
+	}
+}
+
+// TestCameraStreaming tests streaming pictures in real time to the Parkind server
+func TestCameraStreaming(t *testing.T) {
+	// Create the streaming session
+	camCount := 1
+	cs, err := NewCameraSession(camCount)
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
+	// defer cs.Close()
+
+	// Add destination/s
+	cs.AddDestination("127.0.0.1:8080")
+
+	// Start a streaming go routine
+	go func() {
+		err := cs.Stream()
+		if err != nil {
+			t.Log(err.Error())
+			t.Fail()
+		}
+	}()
+
+	// Wait for 5 seconds and close the session
+	time.Sleep(time.Second * 5)
+	err = cs.Close()
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
 	}
 }

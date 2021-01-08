@@ -40,7 +40,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: Create a streaming go routine and start it here
+	// Set up a camera session and a streaming goroutine
+	cs, err := streaming.NewCameraSession(1)
+	if err != nil {
+		logging.ErrorLog(err.Error())
+		os.Exit(3)
+	}
+	defer cs.Close()
+	go cs.Stream()
 
 	// Set up a server and start it
 	server := streaming.CreateHttpServer(args.verbosity)
