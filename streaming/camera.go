@@ -1,8 +1,13 @@
 package streaming
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
+	"sync"
+	"time"
 
+	"github.com/TheSlipper/ParkindStreamer/logging"
 	"gocv.io/x/gocv"
 )
 
@@ -13,7 +18,9 @@ type cameraSession struct {
 	lastFrames []gocv.Mat           // pointers to the last frames (to free from memory)
 	Denoising  bool                 // flag for the non-local means denoising algorithm
 
-	dests []string // Streaming destinations
+	dests []string   // Streaming destinations
+	smu   sync.Mutex // streaming (and destination management) mutex
+	stop  bool       // stop streaming flag
 }
 
 // GetFrames gets a single frame from each of the cameras in the camera session
@@ -49,9 +56,52 @@ func (cs *cameraSession) GetFrames() (frames []*gocv.Mat, err error) {
 
 // Stream starts streaming to the specified addresses
 func (cs *cameraSession) Stream() (err error) {
-	// If no sources or AddDestination is ran at the same time then return
-	// an error
+	// Get the mutex
+	cs.smu.Lock()
+	defer cs.smu.Unlock()
 
+	// If no sources or AddDestination then return an error
+	if len(cs.dests) <= 0 {
+		return errors.New("insufficient amount of destinations in the destinations")
+	}
+
+	// Stream images in the given framerate as long as the stop flag is not set to true
+	var frames []*gocv.Mat
+	recFrames := 0
+
+	const FPS int = 1
+	interval := time.Duration(int64(time.Second) / int64(FPS))
+	start := time.Now()
+
+	for !cs.stop {
+		// If a second since start has passed reset the counters
+		durUntilNow := time.Since(start)
+		if durUntilNow >= time.Second {
+			if recFrames < FPS {
+				logging.WarningLog("dropped", strconv.Itoa(FPS-recFrames), "frames")
+			}
+			recFrames = 0
+			start = time.Now()
+		} else if recFrames == FPS {
+			// if recorded enough frames in this second then just wait until the end of it
+			time.Sleep(time.Second - durUntilNow)
+			continue
+		}
+
+		// Pull the frames and increment the recorded frames
+		frames, err = cs.GetFrames()
+		if err != nil {
+			return
+		}
+		recFrames++
+
+		// Send the frames
+
+		// Wait for the calculated amount of time
+		time.Sleep(interval)
+	}
+
+	cs.stop = false
 	return
 }
 
@@ -68,6 +118,9 @@ func (cs *cameraSession) AddDestination(ip string, endpoint string) (err error) 
 
 // Close closes the camera session
 func (cs *cameraSession) Close() (err error) {
+	// Stop streaming
+	cs.stop = true
+
 	// For each of the cameras
 	for i := 0; i < cs.camCount; i++ {
 		// close the handle
@@ -105,5 +158,6 @@ func NewCameraSession(camCount int) (cs cameraSession, err error) {
 	}
 
 	cs.camCount = len(cs.cams)
+	cs.stop = false // do not order the stream to stop
 	return
 }
