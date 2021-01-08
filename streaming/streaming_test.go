@@ -2,6 +2,7 @@ package streaming
 
 import (
 	"fmt"
+	"net/http"
 	"runtime"
 	"testing"
 	"time"
@@ -61,6 +62,18 @@ func TestCameraReadingAndLeaks(t *testing.T) {
 
 // TestCameraStreaming tests streaming pictures in real time to the Parkind server
 func TestCameraStreaming(t *testing.T) {
+	// Create an http server for accepting images and run it with a go routine
+	http.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Handling this
+	})
+	go func() {
+		err := http.ListenAndServe(":8080", nil)
+		if err != nil {
+			t.Log(err)
+			t.Fail()
+		}
+	}()
+
 	// Create the streaming session
 	camCount := 1
 	cs, err := NewCameraSession(camCount)
@@ -68,10 +81,9 @@ func TestCameraStreaming(t *testing.T) {
 		t.Log(err.Error())
 		t.Fail()
 	}
-	// defer cs.Close()
 
 	// Add destination/s
-	cs.AddDestination("127.0.0.1:8080")
+	cs.AddDestination("127.0.0.1:8080", "/bar")
 
 	// Start a streaming go routine
 	go func() {

@@ -49,11 +49,17 @@ func main() {
 	defer cs.Close()
 	go cs.Stream()
 
-	// Set up a server and start it
-	server := streaming.CreateHttpServer(args.verbosity)
-	err = server.ListenAndServe()
+	// Set up local http server instance
+	server, err := streaming.CreateHttpServer(args.verbosity)
 	if err != nil {
 		logging.ErrorLog(err.Error())
 		os.Exit(2)
+	}
+
+	// Start the server
+	err = server.ListenAndServe()
+	if err != nil {
+		logging.ErrorLog(err.Error())
+		os.Exit(3)
 	}
 }

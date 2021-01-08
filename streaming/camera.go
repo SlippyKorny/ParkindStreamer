@@ -56,7 +56,7 @@ func (cs *cameraSession) Stream() (err error) {
 }
 
 // AddDestination adds a streaming destinations
-func (cs *cameraSession) AddDestination(d string) (err error) {
+func (cs *cameraSession) AddDestination(ip string, endpoint string) (err error) {
 	// If the Stream was called then this should return an error
 
 	// Check if there is a Parkind server running at the given address

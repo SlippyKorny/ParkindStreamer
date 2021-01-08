@@ -3,7 +3,6 @@ package streaming
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/TheSlipper/ParkindStreamer/logging"
@@ -30,15 +29,14 @@ func (p parkindStreamerHandler) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 }
 
 // Sets up the http server of the parkind client and returns it
-func CreateHttpServer(verbose bool) (s *http.Server) {
+func CreateHttpServer(verbose bool) (s *http.Server, err error) {
 	// Create an http handler
 	handler := parkindStreamerHandler{verbose: verbose}
 
 	// Generate a connection token for this session
 	handler.token, err = uuid.NewRandom()
 	if err != nil {
-		logging.ErrorLog(err.Error())
-		os.Exit(3)
+		return
 	} else {
 		logging.InfoLog(verbose, "Successfully generated a new connection token:", handler.token.String())
 	}
@@ -53,7 +51,7 @@ func CreateHttpServer(verbose bool) (s *http.Server) {
 	}
 	logging.InfoLog(verbose, "Server listening at 127.0.0.1:8080")
 
-	return s
+	return
 }
 
 // Url handle that handles all of the invalid incoming requests
