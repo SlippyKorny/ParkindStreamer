@@ -3,6 +3,7 @@ package streaming
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/TheSlipper/ParkindStreamer/logging"
@@ -11,8 +12,9 @@ import (
 
 // Handler of the client's http server
 type parkindStreamerHandler struct {
-	verbose bool      // verbosity flag
-	token   uuid.UUID // new connection token
+	verbose bool           // verbosity flag
+	token   uuid.UUID      // new connection token
+	cs      *cameraSession // streaming session
 }
 
 // Implementation of the http.Handler interface. Used as a simple router that calls handlers
@@ -24,12 +26,13 @@ func (p parkindStreamerHandler) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 	if url == "/check/" {
 		connectionTestHandle(rw, req, &p)
 	} else {
-		invalidUrlHandle(rw, req)
+		invalidURLHandle(rw, req)
 	}
 }
 
-// Sets up the http server of the parkind client and returns it
-func CreateHttpServer(verbose bool) (s *http.Server, err error) {
+// CreateHTTPServer sets up an http server of the parkind client that will listen only to requests
+// from the passed address and then return it
+func CreateHTTPServer(verbose bool, address string) (s *http.Server, ecs *cameraSession, err error) {
 	// Create an http handler
 	handler := parkindStreamerHandler{verbose: verbose}
 
@@ -37,8 +40,30 @@ func CreateHttpServer(verbose bool) (s *http.Server, err error) {
 	handler.token, err = uuid.NewRandom()
 	if err != nil {
 		return
-	} else {
-		logging.InfoLog(verbose, "Successfully generated a new connection token:", handler.token.String())
+	}
+	logging.InfoLog(verbose, "Successfully generated a new connection token:",
+		handler.token.String())
+
+	// Create a streaming session
+	cs, err := NewCameraSession(1, 1)
+	if err != nil {
+		logging.ErrorLog(err.Error())
+		os.Exit(2)
+	}
+	ecs = &cs
+	handler.cs = &cs
+
+	if address != "" {
+		cs.AddDestination(address+":8000", "api/frame")
+		go func() {
+			err := cs.Stream()
+			if err != nil {
+				logging.ErrorLog(err.Error())
+				os.Exit(3)
+			}
+		}()
+
+		handler.cs = &cs
 	}
 
 	// Set up the server
@@ -54,8 +79,8 @@ func CreateHttpServer(verbose bool) (s *http.Server, err error) {
 	return
 }
 
-// Url handle that handles all of the invalid incoming requests
-func invalidUrlHandle(rw http.ResponseWriter, req *http.Request) {
+// invalidURLHandle handles all of the invalid incoming requests
+func invalidURLHandle(rw http.ResponseWriter, req *http.Request) {
 	logging.ErrorLog("invalid", req.Method, "request for URL:", req.URL.String())
 	rw.WriteHeader(http.StatusBadRequest)
 	fmt.Fprintf(rw, "<h1>Error 400: Bad request</h1>")
