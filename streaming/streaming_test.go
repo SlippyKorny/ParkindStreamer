@@ -19,7 +19,7 @@ func getMemUsage() uint64 {
 // TestCameraReadingAndLeaks tests the functionality of the camera session
 func TestCameraReadingAndLeaks(t *testing.T) {
 	camCount := 1
-	cs, err := NewCameraSession(camCount)
+	cs, err := NewCameraSession(camCount, 1)
 	if err != nil {
 		t.Log(err.Error())
 		t.Fail()
@@ -63,8 +63,10 @@ func TestCameraReadingAndLeaks(t *testing.T) {
 // TestCameraStreaming tests streaming pictures in real time to the Parkind server
 func TestCameraStreaming(t *testing.T) {
 	// Create an http server for accepting images and run it with a go routine
-	http.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/foo", func(rw http.ResponseWriter, r *http.Request) {
 		// TODO: Handling this
+		// w.Header()
+		rw.WriteHeader(http.StatusAccepted)
 	})
 	go func() {
 		err := http.ListenAndServe(":8080", nil)
@@ -76,14 +78,14 @@ func TestCameraStreaming(t *testing.T) {
 
 	// Create the streaming session
 	camCount := 1
-	cs, err := NewCameraSession(camCount)
+	cs, err := NewCameraSession(camCount, 1)
 	if err != nil {
 		t.Log(err.Error())
 		t.Fail()
 	}
 
 	// Add destination/s
-	cs.AddDestination("127.0.0.1:8080", "/bar")
+	cs.AddDestination("127.0.0.1:8080", "foo")
 
 	// Start a streaming go routine
 	go func() {
@@ -95,7 +97,7 @@ func TestCameraStreaming(t *testing.T) {
 	}()
 
 	// Wait for 5 seconds and close the session
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 20) // TODO: Change to 5 secs
 	err = cs.Close()
 	if err != nil {
 		t.Log(err.Error())
