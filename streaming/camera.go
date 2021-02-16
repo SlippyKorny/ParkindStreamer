@@ -18,6 +18,7 @@ type cameraSession struct {
 	devID int // id of the device that is running this session
 
 	cams       []*gocv.VideoCapture // camera handles
+	camIDs     []int                // Parkind system IDs of the cameras
 	fps        int                  // cameras framerate
 	camCount   int                  // amount of cameras in session
 	lastFrames []gocv.Mat           // pointers to the last frames (to free from memory)
@@ -163,7 +164,7 @@ func (cs *cameraSession) send() error {
 
 		for _, dest := range cs.dests {
 			// Send a POST request
-			destFull := fmt.Sprintf("%s/%d/%d", dest, cs.devID, i)
+			destFull := fmt.Sprintf("%s/%d/%d", dest, cs.devID, cs.camIDs[i])
 			resp, err := http.Post(destFull, "image/jpeg", bytes.NewReader(data))
 			if err != nil {
 				return err

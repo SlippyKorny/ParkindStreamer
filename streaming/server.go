@@ -41,7 +41,7 @@ func CreateHTTPServer(verbose bool, address string) (s *http.Server, ecs *camera
 	if err != nil {
 		return
 	}
-	logging.InfoLog(verbose, "Successfully generated a new connection token:",
+	logging.InfoLog(true, "Successfully generated a new connection token:",
 		handler.token.String())
 
 	// Create a streaming session
@@ -50,6 +50,9 @@ func CreateHTTPServer(verbose bool, address string) (s *http.Server, ecs *camera
 		logging.ErrorLog(err.Error())
 		os.Exit(2)
 	}
+	cs.devID = 1
+	cs.camIDs = []int{1}
+
 	ecs = &cs
 	handler.cs = &cs
 
